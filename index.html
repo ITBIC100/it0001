@@ -105,7 +105,7 @@
 
     function searchProduct() {
       const input = document.getElementById('searchInput').value;
-      const searchKey = input.substring(0, 13).toLowerCase(); // ambil 13 karakter pertama
+      const searchKey = input.substring(0, 10).toLowerCase(); // ambil 10 karakter pertama
       const results = products.filter(product => product.toLowerCase().includes(searchKey));
 
       const resultList = document.getElementById('resultList');
