@@ -73,7 +73,6 @@
   <script>
     // Data produk (tanpa database)
     const products = [
-      "155-A01-0001/1/N/38/ ~ SCK @ 25 KG",
       "1A01/1/N/3/ ~ MC 10 BOX @ 19.44 KG",
       "1A02/1/N/3/ ~ MC 25 BOX @ 20 KG",
       "1A03/1/N/3/ ~ MC 35 Box @ 17.5 KG",
@@ -106,7 +105,7 @@
 
     function searchProduct() {
       const input = document.getElementById('searchInput').value;
-      const searchKey = input.substring(0, 10).toLowerCase(); // ambil 10 karakter pertama
+      const searchKey = input.substring(0, 13).toLowerCase(); // ambil 13 karakter pertama
       const results = products.filter(product => product.toLowerCase().includes(searchKey));
 
       const resultList = document.getElementById('resultList');
