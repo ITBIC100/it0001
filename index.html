@@ -1,130 +1,971 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cek Qr Product Search</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #f5700b 0%, hwb(19 10% 4%) 100%);
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cek QR Product Search</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Tahoma,Verdana,sans-serif;
+}
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+
+    background:linear-gradient(
+        135deg,
+        #ffffff,
+        #fafafa,
+        #f4f4f4
+    );
+    padding:12px;
+    overflow-x:hidden;
+    position:relative;
+}
+/* Background */
+body::before{
+    content:"";
+    position:absolute;
+    width:280px;
+    height:280px;
+    border-radius:50%;
+    background:#ffc9df;
+    top:-100px;
+    left:-100px;
+    filter:blur(70px);
+    opacity:.5;
+}
+body::after{
+    content:"";
+    position:absolute;
+    width:280px;
+    height:280px;
+    border-radius:50%;
+    background:#c7e3ff;
+    bottom:-100px;
+    right:-100px;
+    filter:blur(70px);
+    opacity:.5;
+}
+/* Container */
+.container{
+    width:100%;
+    max-width:900px;
+    position:relative;
+    z-index:10;
+    background:rgba(255,255,255,.90);
+    backdrop-filter:blur(15px);
+    border-radius:20px;
+    border:1px solid #ececec;
+    padding:15px;
+    box-shadow:
+    0 4px 15px rgba(0,0,0,.05);
+}
+
+/* Judul */
+
+h1{
+    text-align:center;
+    font-size:26px;
+    font-weight:700;
+    color:#222;
+    margin-bottom:15px;
+}
+/* Search */
+.search-box{
+    display:grid;
+    grid-template-columns: 1fr 70px 70px;
+    gap:6px;
+    align-items:center;
+}
+.search-box input{
+    width:100%;
+    height:42px;
+    border-radius:22px;
+    border:1px solid #dcdcdc;
+    background:#fff;
+    padding:0 15px;
+    font-size:14px;
+    color:#111;
+    outline:none;
+    transition:.2s;
+}
+
+.search-box input::placeholder{
+    color:#9a9a9a;
+}
+
+.search-box input:focus{
+
+    border-color:#4f93ff;
+
+    box-shadow:
+    0 0 0 3px rgba(79,147,255,.15);
+}
+
+/* Tombol */
+
+button{
+
+    height:42px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:700;
+    transition:.2s;
+}
+
+button:nth-child(2){
+
+    background:#ffffff;
+
+    color:#222;
+
+    border:1px solid #dddddd;
+}
+
+button:nth-child(3){
+
+    background:#f70f51;
+
+    color:white;
+}
+
+/* Result */
+
+.result{
+
+    margin-top:10px;
+
+    background:white;
+
+    border:1px solid #eeeeee;
+
+    border-radius:12px;
+
+    padding:10px;
+
+    box-shadow:
+    0 2px 6px rgba(0,0,0,.03);
+}
+
+/* QR Header */
+
+.result h2{
+
+    font-size:10px;
+
+    font-weight:700;
+
+    color:#444;
+
+    line-height:1.4;
+
+    word-break:break-all;
+
+    margin-bottom:8px;
+}
+
+/* Valid */
+
+.valid{
+
+    background:#fcfffc;
+
+    border:1px solid #ddeedd;
+
+    border-radius:10px;
+
+    padding:8px;
+}
+
+/* Invalid */
+
+.invalid{
+
+    background:#fff7f7;
+
+    border:1px solid #ffd4d4;
+
+    border-radius:10px;
+
+    padding:10px;
+
+    color:#c40000;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    line-height:1.5;
+}
+
+/* Table */
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+}
+
+tr{
+
+    border-bottom:1px solid #f1f1f1;
+}
+
+tr:last-child{
+    border-bottom:none;
+}
+
+td{
+
+    padding:6px 4px;
+
+    font-size:12px;
+
+    line-height:1.4;
+
+    color:#111;
+
+    font-weight:600;
+}
+
+/* Label */
+
+td:first-child{
+
+    width:95px;
+
+    color:#5138f7;
+
+    font-weight:800;
+
+    font-size:10px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.4px;
+}
+
+/* Value */
+
+td:last-child{
+
+    color:#000;
+
+    font-weight:700;
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+    body{
+        padding:8px;
     }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0px 10px 25px rgba(0,0,0,0.2);
-      width: 350px;
-      text-align: center;
+
+    .container{
+
+        padding:12px;
+
+        border-radius:15px;
     }
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-      font-size: 16px;
+
+    h1{
+
+        font-size:18px;
+
+        margin-bottom:10px;
     }
-    button {
-      padding: 10px 20px;
-      background-color: #ff7e5f;
-      border: none;
-      color: white;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
+
+    .search-box{
+
+        display:grid;
+
+        grid-template-columns:
+        calc(100% - 150px)
+        70px
+        70px;
+
+        gap:5px;
     }
-    button:hover {
-      background-color: #7b86fe;
+
+    .search-box input{
+
+        width:100%;
+
+        height:40px;
+
+        font-size:14px;
     }
-    ul {
-      list-style: none;
-      padding: 0;
-      text-align: left;
+
+    button{
+
+        width:70px;
+
+        height:40px;
+
+        font-size:11px;
     }
-    li {
-      padding: 8px;
-      margin: 5px 0;
-      background-color: #f0f0f0;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: 0.2s;
+
+    .result{
+
+        padding:8px;
+
+        border-radius:10px;
     }
-    li:hover {
-      background-color: #f06712;
+
+    .result h2{
+
+        font-size:9px;
     }
-  </style>
+
+    td{
+
+        font-size:11px;
+
+        padding:4px 2px;
+
+        color:#57a5f8;
+
+        font-weight:700;
+    }
+
+    td:first-child{
+
+        width:80px;
+
+        font-size:9px;
+
+        color:#5138f7;
+
+        font-weight:800;
+    }
+
+    td:last-child{
+
+        color:#111;
+
+        font-weight:700;
+    }
+}
+
+</style>
+
 </head>
 <body>
-  <div class="container">
-    <h2>Cek Qr Product Search</h2>
-    <input type="text" id="searchInput" placeholder="Masukkan nama produk...">
-    <button onclick="searchProduct()">Cari</button>
-    <ul id="resultList"></ul>
-  </div>
 
-  <script>
-    // Data produk (tanpa database)
-    const products = [
-      "1A01/1/N/3/ ~ MC 10 Box @ 19.44 KG",
-      "1A02/1/N/3/ ~ MC 25 Box @ 20 KG",
-      "1A03/1/N/3/ ~ MC 35 Box @ 17.5 KG",
-      "1A04/1/N/3/ ~ MC 50 Box @ 18.8 KG",
-      "1B02/1/N/3/ ~ CC 50 Box @ 20 KG",
-      "1B03/1/N/3/ ~ CC 30 Box @ 18.6 KG",
-      "1C01/1/N/3/ ~ ES 25 Box @ 20 KG",
-      "1C02/1/N/3/ ~ ES 40/HJ Box @ 18 KG",
-      "1D01/1/N/8/ ~ MIKIZERO Dos Small @ 0.9 KG",
-      "1D01/1/N/3/ ~ MIKIZERO Box @ 0.9 KG",
-      "1D02/1/N/8/ ~ MIKIZERO STEVIA Dos Small @ 0.9 KG",
-      "1D02/1/N/3/ ~ MIKIZERO STEVIA Box @ 0.9 KG",
-      "155-A01-0001/1/N/15/ ~ MSG LC @ 25 Kg",
-      "155-A01-0002/1/N/15/ ~ MSG T @ 25 Kg",
-      "155-A01-0004/1/N/15/ ~ MSG LC MESH @ 25 Kg",
-      "2A01/1/N/16/ ~ MM 100 Box @ 12 Kg",
-      "2A02/1/N/16/ ~ MM 100 T Box @ 12 Kg",
-      "2A03/1/N/16/ ~ MM 100 Box Mesh 80 @ 12 Kg",
-      "2A04/1/N/16/ ~ MM 200 Box @ 12 Kg",
-      "2A05/1/N/16/ ~ MM 250 Box @ 12 Kg",
-      "2A06/1/N/16/ ~ MM 250 Box Mesh 80 @ 12 Kg",
-      "2A07/1/N/16/ ~ MM 40 Box @ 12 Kg",
-      "2A08/1/N/16/ ~ MM 50 P Box @ 12 Kg",
-      "2A09/1/N/16/ ~ MM 50 T Box @ 12 Kg",
-      "2A10/1/N/16/ ~ MM 50 P Box Mesh 80 @ 12 Kg",
-      "2A11/1/N/16/ ~ MM 500 T Box @ 12 Kg",
-      "2B01/1/N/16/ ~ MM R1000 Box @ 7.2 Kg",
-      "2B02/1/N/16/ ~ MM R500 Box @ 7.68 Kg",
-      "2B04/1/N/16/ ~ MM R5000 Box @ 8.8 Kg",
-      "2B05/1/N/16/ ~ MM R5000 Box @ 7.2 Kg",
-      "Smartwatch Fitbit Charge"
+<div class="container">
+
+<h1>Cek QR Product Search</h1>
+
+<div class="search-box">
+    <input
+        type="text"
+        id="scan"
+        placeholder="Scan atau ketik kode disini..."
+        value="">
+    <button onclick="cari()">Cari</button>
+    <button onclick="clearScan()">Clear</button>
+</div>
+
+<div id="hasil"></div>
+
+</div>
+
+<script>
+
+/* ===========================
+   DATABASE ITEM
+=========================== */
+
+const items = [
+
+{
+    barcode:"155-A01-0001",
+    itemNo:"155-A01-0001",
+    description:"SCK @ 25 KG",
+    pt:"1"
+},
+
+{
+    barcode:"155-A01-0001",
+    itemNo:"155-A01-0001",
+    description:"MSG LC @ 25 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"155-A01-0002",
+    itemNo:"155-A01-0002",
+    description:"SCK NF13 @ 25 KG",
+    pt:"1"
+},
+
+{
+    barcode:"155-A01-0002",
+    itemNo:"155-A01-0002",
+    description:"MSG T @ 25 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"155-A01-0004",
+    itemNo:"155-A01-0004",
+    description:"SCK-GUMINDO @ 25 KG",
+    pt:"1"
+},
+
+{
+    barcode:"155-A01-0004",
+    itemNo:"155-A01-0004",
+    description:"MSG LC MESH @ 25 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"1A01",
+    itemNo:"155-C01-1001",
+    description:"MC 10 BOX @ 19.44 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1A02",
+    itemNo:"155-C01-2001",
+    description:"MC 25 BOX @ 20 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1A03",
+    itemNo:"155-C01-3001",
+    description:"MC 35 BOX @ 17.5 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1A04",
+    itemNo:"155-C01-5001",
+    description:"MC 50 BOX @ 18.8 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1B02",
+    itemNo:"155-C02-2002",
+    description:"CC 50 BOX @ 20 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1B03",
+    itemNo:"155-C02-3001",
+    description:"CC 30 BOX @ 18.6 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1C01",
+    itemNo:"155-C03-2001",
+    description:"ES 25 BOX @ 20 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1C02",
+    itemNo:"155-C03-4001",
+    description:"ES 40/HJ BOX @ 18 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1D01",
+    itemNo:"155-C04-0001",
+    description:"MIKIZERO Box @ 0.9 KG",
+    pt:"1"
+},
+
+{
+    barcode:"1D02",
+    itemNo:"155-C04-0002",
+    description:"MIKIZERO STEVIA Box @ 0.9 KG",
+    pt:"1"
+},
+
+{
+    barcode:"2A01",
+    itemNo:"155-B01-1001",
+    description:"MM 100 Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A02",
+    itemNo:"155-B01-1002",
+    description:"MM 100 T Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A03",
+    itemNo:"155-B01-1003",
+    description:"MM 100 Box Mesh 80 @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A04",
+    itemNo:"155-B01-2001",
+    description:"MM 200 Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A05",
+    itemNo:"155-B01-2501",
+    description:"MM 250 Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A06",
+    itemNo:"155-B01-2502",
+    description:"MM 250 Box Mesh 80 @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A07",
+    itemNo:"155-B01-4001",
+    description:"MM 40 Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A08",
+    itemNo:"155-B01-5001",
+    description:"MM 50 P Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A09",
+    itemNo:"155-B01-5002",
+    description:"MM 50 T Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A10",
+    itemNo:"155-B01-5003",
+    description:"MM 50 P Box Mesh 80 @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2A11",
+    itemNo:"155-B01-5004",
+    description:"MM 500 T Box @ 12 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2B01",
+    itemNo:"155-B02-1001",
+    description:"MM R1000 Box @ 7.2 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2B02",
+    itemNo:"155-B02-5001",
+    description:"MM R500 Box @ 7.68 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2B04",
+    itemNo:"155-B02-5003",
+    description:"MM R5000 Box @ 8.8 Kg",
+    pt:"2"
+},
+
+{
+    barcode:"2B05",
+    itemNo:"155-B02-5004",
+    description:"MM R5000 Box @ 7.2 Kg",
+    pt:"2"
+}
+
+];
+
+
+/* ===========================
+   DATABASE UOM 1
+=========================== */
+
+const uom1 = {
+1:"Batang",
+2:"Botol",
+3:"Box",
+4:"Buah",
+5:"Bungkus",
+6:"Can",
+7:"Drum",
+8:"Dus",
+9:"Ember",
+10:"Fet",
+11:"Galon",
+12:"Gram",
+13:"Gross",
+14:"Jerigen",
+15:"Kaleng",
+16:"Kg",
+17:"Lbs",
+18:"Lembar",
+19:"Liter",
+20:"Lusin",
+21:"M3",
+22:"Meter",
+23:"Pack",
+24:"Pail",
+25:"Pasang",
+26:"Pieces",
+27:"Rim",
+28:"Rit",
+29:"Roll",
+30:"Sachet",
+31:"Set",
+32:"Tabung",
+33:"Ton",
+34:"Tube",
+35:"Unit",
+36:"Vel",
+37:"Yard",
+38:"Zak",
+39:"Cc",
+40:"M2"
+};
+
+
+/* ===========================
+   DATABASE UOM 2
+=========================== */
+
+const uom2 = {
+1:"Batang",
+2:"Liter",
+3:"Lusin",
+4:"Meter",
+5:"Pack",
+6:"Pail",
+7:"Pieces",
+8:"Rim",
+9:"Roll",
+10:"Set",
+11:"Ton",
+12:"Botol",
+13:"Unit",
+14:"Vel",
+15:"Zak",
+16:"Box",
+17:"Dus",
+18:"Ember",
+19:"Galon",
+20:"Kaleng",
+21:"Kg",
+22:"Lembar",
+23:"Buah",
+24:"Bungkus",
+25:"Pasang"
+};
+
+
+/* ===========================
+   MASTER UOM BERDASARKAN PT
+=========================== */
+
+const uomMaster = {
+    "1": uom1,
+    "2": uom2
+};
+
+function getUomName(batch, uomCode){
+
+    const pt = batch.charAt(0);
+
+    return uomMaster[pt]?.[uomCode] || "-";
+
+}
+
+
+/* ===========================
+   BATCH LOOKUP
+=========================== */
+
+const bulan = {
+A:1,
+B:2,
+C:3,
+D:4,
+E:5,
+F:6,
+G:7,
+H:8,
+I:9,
+J:10,
+K:11,
+L:12
+};
+
+const kodeDigit = {
+S:"1",
+U:"2",
+M:"3",
+B:"4",
+E:"5",
+R:"6",
+T:"7",
+A:"8",
+L:"9",
+I:"0"
+};
+
+const ptMaster = {
+"1":"BAI",
+"2":"IMI"
+};
+
+
+/* ===========================
+   DECODE BATCH
+=========================== */
+
+function decodeBatch(batch){
+
+    if(batch.length < 8){
+        return {
+            valid:false,
+            tanggal:"Batch tidak valid"
+        };
+    }
+
+    let pt = batch.substring(0,1);
+
+    let blnCode = batch.substring(1,2);
+
+    let d1 = batch.substring(2,3);
+    let d2 = batch.substring(3,4);
+
+    let y1 = batch.substring(4,5);
+    let y2 = batch.substring(5,6);
+    let y3 = batch.substring(6,7);
+
+    let bulanAngka = bulan[blnCode];
+
+    if(
+       !bulanAngka ||
+       !kodeDigit[d1] ||
+       !kodeDigit[d2] ||
+       !kodeDigit[y1] ||
+       !kodeDigit[y2] ||
+       !kodeDigit[y3]
+    ){
+        return {
+            valid:false,
+            pt:ptMaster[pt] || "-",
+            tanggal:"Batch Tidak Valid"
+        };
+    }
+
+    let hari =
+        kodeDigit[d1] +
+        kodeDigit[d2];
+
+    let tahun =
+        "20" +
+        kodeDigit[y1] +
+        kodeDigit[y2];
+
+    const namaBulan = [
+        "",
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember"
     ];
 
-    function searchProduct() {
-      const input = document.getElementById('searchInput').value;
-      const searchKey = input.substring(0, 10).toLowerCase(); // ambil 10 karakter pertama
-      const results = products.filter(product => product.toLowerCase().includes(searchKey));
+    return{
+        valid:true,
+        pt:ptMaster[pt] || "-",
+        tanggal:
+        hari+
+        " "+
+        namaBulan[bulanAngka]+
+        " "+
+        tahun
+    };
+}
 
-      const resultList = document.getElementById('resultList');
-      resultList.innerHTML = "";
 
-      if(results.length === 0){
-        resultList.innerHTML = "<li>Tidak ada produk ditemukan</li>";
-      } else {
-        results.forEach(product => {
-          const li = document.createElement('li');
-          li.textContent = product;
-          li.onclick = () => alert(`Anda memilih: ${product}`);
-          resultList.appendChild(li);
-        });
-      }
+/* ===========================
+   SEARCH
+=========================== */
+
+function cari(){
+
+    let qr =
+    document.getElementById("scan")
+    .value.trim();
+    
+    if(qr === ""){
+        document.getElementById("hasil").innerHTML = "";
+        return;
     }
-  </script>
+
+    let p = qr.split("/");
+
+    if(p.length < 5){
+        alert("Format scan tidak valid");
+        return;
+    }
+
+    let barcode = p[0];
+    let qty = p[1];
+    let uomCode = p[3];
+    let batch = p[4];
+
+    
+    // PT diambil dari digit pertama batch
+    let ptBatch = batch.charAt(0);
+
+    // Cari berdasarkan Barcode + PT Batch
+    let item = items.find(row =>
+        row.barcode === barcode &&
+        row.pt === ptBatch
+    );
+
+
+    if(!item){
+        document.getElementById("hasil").innerHTML=
+        `
+        <div class="invalid">
+            Item tidak ditemukan
+            <br><br>
+            Barcode : ${barcode}
+            <br>
+            PT Batch : ${ptBatch}
+            <br><br>
+            Cek apakah Barcode sesuai dengan PT pada digit pertama Batch.
+        </div>
+        `;
+        return;
+    }
+
+    let dataBatch =
+    decodeBatch(batch);
+
+    let warna =
+    dataBatch.valid ? "valid" : "invalid";
+
+    document.getElementById("hasil").innerHTML=`
+
+    <div class="result">
+
+        <h2>
+        ${qr}
+        </h2>
+
+        <div class="${warna}">
+
+            <table>
+
+                <tr>
+                    <td width="180"><b>Item No</b></td>
+                    <td>${item.itemNo}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Item Description</b></td>
+                    <td>${item.description}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Qty</b></td>
+                    <td>${qty}</td>
+                </tr>
+
+                <tr>
+                    <td><b>UoM</b></td>
+                    <td>${getUomName(batch, uomCode)}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Batch</b></td>
+                    <td>${batch}</td>
+                </tr>
+
+                <tr>
+                    <td><b>PT</b></td>
+                    <td>${dataBatch.pt}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Tanggal Produksi</b></td>
+                    <td>${dataBatch.tanggal}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Status Batch</b></td>
+                    <td>
+                    ${
+                        dataBatch.valid
+                        ? '✅ VALID'
+                        : '❌ INVALID'
+                    }
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+
+    </div>`;
+
+}
+
+document.getElementById("scan")
+.addEventListener("keydown", function(e){
+
+    if(e.key === "Enter"){
+        cari();
+    }
+});
+
+cari();
+
+function clearScan(){
+    document.getElementById("scan").value = "";
+    document.getElementById("hasil").innerHTML = "";
+    document.getElementById("scan").focus();
+}
+</script>
 </body>
 </html>
