@@ -13,9 +13,9 @@
 <!-- Library scan kamera (QR + barcode) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
-<!-- DATA MASTER (edit file ini untuk update item / satuan) -->
-<script src="data/items.js"></script>
-<script src="data/uom.js"></script>
+<!-- DATA MASTER: Item.js dan Uom.js harus satu folder dengan index.html -->
+<script src="Item.js"></script>
+<script src="Uom.js"></script>
 
 <style>
 :root{
@@ -196,6 +196,37 @@ button:focus-visible,input:focus-visible{outline:3px solid #7FA6E8;outline-offse
 .empty{text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;padding:20px}
 .empty code{font:500 11.5px var(--mono);color:var(--ink-2)}
 
+
+/* ---------- Status koneksi ---------- */
+.net{
+    margin-left:auto;display:flex;align-items:center;gap:6px;
+    font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:20px;
+    background:rgba(255,255,255,.12);color:#fff;flex-shrink:0;
+}
+.net i{width:8px;height:8px;border-radius:50%;background:#34D399}
+.net.off i{background:#F87171}
+.toast{
+    position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);
+    transform:translate(-50%,-150%);
+    width:calc(100% - 24px);max-width:520px;z-index:50;
+    display:flex;align-items:center;gap:10px;
+    padding:11px 14px;border-radius:14px;color:#fff;
+    box-shadow:0 10px 28px rgba(0,0,0,.22);
+    transition:transform .3s ease;
+}
+.toast.show{transform:translate(-50%,0)}
+.toast.off{background:#B42318}
+.toast.on{background:var(--ok)}
+.toast.info{background:var(--ink-2)}
+.toast svg{width:20px;height:20px;flex-shrink:0}
+.toast strong{display:block;font-size:13.5px}
+.toast span{display:block;font-size:11.5px;opacity:.9;line-height:1.4}
+.toast button{
+    margin-left:auto;background:rgba(255,255,255,.2);border:0;color:#fff;
+    width:28px;height:28px;border-radius:50%;cursor:pointer;flex-shrink:0;font-size:13px;
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
 @media (max-width:360px){
     .desc{font-size:15px}
     .facts{grid-template-columns:1fr 1fr}
@@ -214,8 +245,15 @@ button:focus-visible,input:focus-visible{outline:3px solid #7FA6E8;outline-offse
             <h1>Cek QR Product</h1>
             <p>Scan label untuk melihat item & tanggal produksi</p>
         </div>
+        <div class="net" id="netPill" role="status"><i></i><span>Online</span></div>
     </div>
 </header>
+
+<div class="toast" id="toast" role="alert" aria-live="assertive">
+    <svg id="toastIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></svg>
+    <div><strong id="toastJudul"></strong><span id="toastIsi"></span></div>
+    <button type="button" onclick="tutupToast()" aria-label="Tutup">✕</button>
+</div>
 
 <main>
     <section class="scan-card">
@@ -247,7 +285,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #7FA6E8;outline-offse
 
 <script>
 /* ===========================
-   DATA MASTER (dari folder data/)
+   DATA MASTER (dari file Item.js dan Uom.js)
 =========================== */
 const items     = window.DATA_ITEMS || [];
 const uomMaster = window.DATA_UOM   || {};
@@ -333,7 +371,7 @@ function tampilError(judul, isi){
 function cari(){
     if(!dataSiap){
         tampilError("Data master tidak terbaca",
-            `Pastikan file <code>data/items.js</code> dan <code>data/uom.js</code> ada di folder <code>data</code> sejajar dengan <code>index.html</code>.`);
+            `Pastikan file <code>Item.js</code> dan <code>Uom.js</code> berada di folder yang sama dengan <code>index.html</code>, dan nama file sama persis termasuk huruf besar-kecilnya.`);
         return;
     }
 
@@ -430,7 +468,7 @@ function toggleKamera(){
 async function mulaiKamera(){
     pesanKamera("");
     if(typeof Html5Qrcode === "undefined"){
-        pesanKamera("Library kamera gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
+        pesanKamera(navigator.onLine ? "Library kamera gagal dimuat. Muat ulang halaman." : "Kamera belum tersimpan untuk offline. Buka halaman ini sekali saat ada internet, setelah itu kamera bisa dipakai offline.");
         return;
     }
     if(!window.isSecureContext){
@@ -487,6 +525,82 @@ async function gantiKamera(){
     await stopKamera();
     mulaiKamera();
 }
+
+/* ===========================
+   MODE OFFLINE (Service Worker)
+=========================== */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready).then(() => {
+            try{
+                if(!localStorage.getItem("cekqr-offline-siap")){
+                    localStorage.setItem("cekqr-offline-siap","1");
+                    tampilToast("info","Siap dipakai offline","Scan tetap bisa jalan walau internet putus.",4000);
+                }
+            }catch(e){}
+        }).catch(() => {});
+    });
+}
+
+/* ===========================
+   NOTIFIKASI KONEKSI INTERNET
+=========================== */
+const IKON_OFF = '<path d="M2 8.8a15 15 0 0 1 4.2-2.6M10.7 5.1A15 15 0 0 1 22 8.8M5 12.5a10 10 0 0 1 5.2-2.6M16.8 11.1a10 10 0 0 1 2.2 1.4M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/><path d="M3 3l18 18"/>';
+const IKON_ON  = '<path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/>';
+const IKON_INFO= '<path d="M20 6L9 17l-5-5"/>';
+
+let statusOnline = null;
+let timerToast = null;
+
+function tampilToast(jenis, judul, isi, durasi){
+    const t = document.getElementById("toast");
+    t.className = "toast " + jenis;
+    document.getElementById("toastIco").innerHTML = jenis === "off" ? IKON_OFF : jenis === "on" ? IKON_ON : IKON_INFO;
+    document.getElementById("toastJudul").textContent = judul;
+    document.getElementById("toastIsi").textContent = isi;
+    requestAnimationFrame(() => t.classList.add("show"));
+    clearTimeout(timerToast);
+    if(durasi) timerToast = setTimeout(tutupToast, durasi);
+}
+function tutupToast(){ document.getElementById("toast").classList.remove("show"); }
+
+function setStatus(online){
+    if(online === statusOnline) return;
+    const awal = statusOnline === null;
+    statusOnline = online;
+
+    const pill = document.getElementById("netPill");
+    pill.classList.toggle("off", !online);
+    pill.querySelector("span").textContent = online ? "Online" : "Offline";
+
+    if(!online){
+        tampilToast("off","Internet terputus","Mode offline aktif. Scan & cek item tetap bisa dipakai.", 0);
+        if(navigator.vibrate) navigator.vibrate([60,40,60]);
+    }else if(!awal){
+        tampilToast("on","Internet terhubung kembali","Koneksi sudah normal.", 3500);
+    }
+}
+
+/* Cek koneksi nyata (bukan hanya WiFi tersambung) */
+async function cekKoneksi(){
+    if(!navigator.onLine){ setStatus(false); return; }
+    if(!location.protocol.startsWith("http")){ setStatus(true); return; }
+    try{
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 5000);
+        await fetch("Item.js?cek-koneksi=" + Date.now(), {method:"HEAD", cache:"no-store", signal:ctrl.signal});
+        clearTimeout(t);
+        setStatus(true);
+    }catch(e){
+        setStatus(false);
+    }
+}
+
+window.addEventListener("offline", () => setStatus(false));
+window.addEventListener("online",  () => cekKoneksi());
+document.addEventListener("visibilitychange", () => { if(!document.hidden) cekKoneksi(); });
+setInterval(cekKoneksi, 15000);
+cekKoneksi();
 
 tampilKosong();
 </script>
