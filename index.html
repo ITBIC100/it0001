@@ -2,970 +2,493 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cek QR Product Search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13233F">
+<title>Cek QR Product</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<!-- Library scan kamera (QR + barcode) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+<!-- DATA MASTER (edit file ini untuk update item / satuan) -->
+<script src="data/items.js"></script>
+<script src="data/uom.js"></script>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Segoe UI',Tahoma,Verdana,sans-serif;
+:root{
+    --ink:#13233F;
+    --ink-2:#2B3E5F;
+    --bg:#EEF1F5;
+    --surface:#FFFFFF;
+    --soft:#F5F7FA;
+    --line:#DDE3EB;
+    --muted:#6B7A90;
+    --accent:#F70F51;
+    --ok:#0F8A5F;
+    --ok-bg:#E7F6EF;
+    --bad:#C62828;
+    --bad-bg:#FDECEC;
+    --sans:'Plus Jakarta Sans','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,Consolas,'Courier New',monospace;
 }
+*{margin:0;padding:0;box-sizing:border-box}
 body{
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-
-    background:linear-gradient(
-        135deg,
-        #ffffff,
-        #fafafa,
-        #f4f4f4
-    );
-    padding:12px;
-    overflow-x:hidden;
-    position:relative;
-}
-/* Background */
-body::before{
-    content:"";
-    position:absolute;
-    width:280px;
-    height:280px;
-    border-radius:50%;
-    background:#ffc9df;
-    top:-100px;
-    left:-100px;
-    filter:blur(70px);
-    opacity:.5;
-}
-body::after{
-    content:"";
-    position:absolute;
-    width:280px;
-    height:280px;
-    border-radius:50%;
-    background:#c7e3ff;
-    bottom:-100px;
-    right:-100px;
-    filter:blur(70px);
-    opacity:.5;
-}
-/* Container */
-.container{
-    width:100%;
-    max-width:900px;
-    position:relative;
-    z-index:10;
-    background:rgba(255,255,255,.90);
-    backdrop-filter:blur(15px);
-    border-radius:20px;
-    border:1px solid #ececec;
-    padding:15px;
-    box-shadow:
-    0 4px 15px rgba(0,0,0,.05);
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:env(safe-area-inset-bottom,0px);
 }
 
-/* Judul */
+/* ---------- Header (ringkas) ---------- */
+.top{
+    background:var(--ink);
+    color:#fff;
+    padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 40px;
+}
+.top-inner{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.logo{
+    width:32px;height:32px;border-radius:10px;background:var(--accent);
+    display:grid;place-items:center;flex-shrink:0;
+}
+.logo svg{width:18px;height:18px}
+.top h1{font-size:16px;font-weight:800;line-height:1.2}
+.top p{font-size:11.5px;color:#A9B6CC}
 
-h1{
-    text-align:center;
-    font-size:26px;
-    font-weight:700;
-    color:#222;
-    margin-bottom:15px;
-}
-/* Search */
-.search-box{
-    display:grid;
-    grid-template-columns: 1fr 70px 70px;
-    gap:6px;
-    align-items:center;
-}
-.search-box input{
-    width:100%;
-    height:42px;
-    border-radius:22px;
-    border:1px solid #dcdcdc;
-    background:#fff;
-    padding:0 15px;
-    font-size:14px;
-    color:#111;
-    outline:none;
-    transition:.2s;
+main{max-width:560px;margin:-30px auto 0;padding:0 12px 16px}
+
+/* ---------- Kartu scan ---------- */
+.scan-card{
+    background:var(--surface);
+    border-radius:18px;
+    padding:10px;
+    box-shadow:0 8px 24px rgba(19,35,63,.10);
 }
 
-.search-box input::placeholder{
-    color:#9a9a9a;
+/* Viewfinder kamera */
+.viewfinder{
+    position:relative;border-radius:14px;overflow:hidden;background:#0C1830;
+    width:100%;aspect-ratio:1/1;max-height:300px;margin-bottom:10px;display:none;
+}
+.viewfinder.on{display:block}
+#reader{width:100%;height:100%}
+#reader video{width:100%!important;height:100%!important;object-fit:cover}
+.frame{position:absolute;inset:18%;pointer-events:none}
+.frame i{position:absolute;width:26px;height:26px;border:3px solid #fff}
+.frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
+.frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 8px 0 0}
+.frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 8px}
+.frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 8px 0}
+.laser{
+    position:absolute;left:18%;right:18%;height:2px;top:50%;
+    background:var(--accent);box-shadow:0 0 12px var(--accent);
+    animation:sweep 2s ease-in-out infinite alternate;
+}
+@keyframes sweep{from{top:22%}to{top:78%}}
+.cam-bar{
+    position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;
+    padding:10px;background:linear-gradient(transparent,rgba(0,0,0,.55));
+}
+.cam-bar button{
+    height:34px;padding:0 14px;border-radius:17px;border:0;
+    background:rgba(255,255,255,.2);color:#fff;font:600 12.5px var(--sans);cursor:pointer;
 }
 
-.search-box input:focus{
-
-    border-color:#4f93ff;
-
-    box-shadow:
-    0 0 0 3px rgba(79,147,255,.15);
+/* Input + tombol kamera di dalam kolom */
+.manual{display:flex;gap:6px}
+.field{position:relative;flex:1;min-width:0}
+.field input{
+    width:100%;height:44px;
+    border:1.5px solid var(--line);border-radius:12px;
+    padding:0 46px 0 12px;
+    font:500 13.5px var(--mono);color:var(--ink);
+    background:var(--soft);outline:none;
+    transition:border-color .15s, box-shadow .15s;
 }
-
-/* Tombol */
-
-button{
-
-    height:42px;
-    border:none;
-    border-radius:12px;
-    cursor:pointer;
-    font-size:12px;
-    font-weight:700;
-    transition:.2s;
+.field input::placeholder{font-family:var(--sans);color:#98A4B5}
+.field input:focus{border-color:var(--ink-2);box-shadow:0 0 0 3px rgba(43,62,95,.12);background:#fff}
+.cam-in{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    width:32px;height:32px;border-radius:50%;border:0;
+    background:var(--accent);color:#fff;cursor:pointer;
+    display:grid;place-items:center;
 }
+.cam-in svg{width:17px;height:17px}
+.cam-in:active{transform:translateY(-50%) scale(.92)}
+.cam-in.live{background:var(--ink)}
 
-button:nth-child(2){
-
-    background:#ffffff;
-
-    color:#222;
-
-    border:1px solid #dddddd;
+.btn{
+    height:44px;padding:0 14px;border-radius:12px;cursor:pointer;
+    font:700 13.5px var(--sans);border:0;flex-shrink:0;
 }
+.btn-ink{background:var(--ink);color:#fff}
+.btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line);width:44px;padding:0}
+.btn:active{transform:scale(.97)}
+button:focus-visible,input:focus-visible{outline:3px solid #7FA6E8;outline-offset:2px}
 
-button:nth-child(3){
+.cam-msg{font-size:11.5px;color:var(--bad);margin:8px 2px 0;display:none;line-height:1.45}
+.cam-msg.show{display:block}
 
-    background:#f70f51;
-
-    color:white;
-}
-
-/* Result */
-
+/* ---------- Hasil (muat 1 layar) ---------- */
+#hasil{margin-top:10px}
 .result{
-
-    margin-top:10px;
-
-    background:white;
-
-    border:1px solid #eeeeee;
-
-    border-radius:12px;
-
-    padding:10px;
-
-    box-shadow:
-    0 2px 6px rgba(0,0,0,.03);
+    background:var(--surface);border-radius:18px;overflow:hidden;
+    box-shadow:0 8px 24px rgba(19,35,63,.08);
+    animation:rise .2s ease-out;
 }
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.result,.notice{animation:none}.laser{animation:none}}
 
-/* QR Header */
-
-.result h2{
-
-    font-size:10px;
-
-    font-weight:700;
-
-    color:#444;
-
-    line-height:1.4;
-
-    word-break:break-all;
-
-    margin-bottom:8px;
+.status{display:flex;align-items:center;gap:10px;padding:9px 14px}
+.status.ok{background:var(--ok-bg);color:var(--ok)}
+.status.bad{background:var(--bad-bg);color:var(--bad)}
+.status .ico{
+    width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+    color:#fff;font-weight:800;font-size:13px;flex-shrink:0;
 }
+.status.ok .ico{background:var(--ok)}
+.status.bad .ico{background:var(--bad)}
+.status strong{font-size:13.5px}
+.status span{font-size:11.5px;opacity:.85;margin-left:auto;text-align:right}
 
-/* Valid */
+.body{padding:12px 14px 14px}
+.desc{font-size:16.5px;font-weight:800;line-height:1.25}
+.meta{font:500 11.5px var(--mono);color:var(--muted);margin-top:3px}
 
-.valid{
-
-    background:#fcfffc;
-
-    border:1px solid #ddeedd;
-
-    border-radius:10px;
-
-    padding:8px;
+.date{
+    margin-top:10px;background:var(--soft);border-radius:12px;padding:9px 12px;
+    display:flex;align-items:baseline;justify-content:space-between;gap:8px;
 }
+.date small{font-size:11.5px;color:var(--muted)}
+.date b{font-size:16.5px;font-weight:800}
+.date.unknown b{color:var(--bad)}
 
-/* Invalid */
+.facts{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:6px;margin-top:6px}
+.fact{background:var(--soft);border-radius:12px;padding:8px 10px}
+.fact small{display:block;font-size:11px;color:var(--muted)}
+.fact b{font-size:14px;font-weight:700}
 
-.invalid{
-
-    background:#fff7f7;
-
-    border:1px solid #ffd4d4;
-
-    border-radius:10px;
-
-    padding:10px;
-
-    color:#c40000;
-
-    font-size:12px;
-
-    font-weight:700;
-
-    line-height:1.5;
+/* Strip rincian batch (ringkas) */
+.strip{
+    margin-top:10px;display:grid;grid-template-columns:1fr 1fr 1.3fr 1.8fr;
+    border:1.5px solid var(--ink);border-radius:12px;overflow:hidden;
 }
+.seg{text-align:center;padding:6px 2px;border-right:1.5px solid var(--ink);line-height:1.25}
+.seg:last-child{border-right:0}
+.seg .code{font:700 13.5px var(--mono);letter-spacing:.5px;display:block}
+.seg .val{font-size:11.5px;font-weight:700;display:block}
+.seg .lab{font-size:10px;color:var(--muted);display:block}
+.seg.err{background:var(--bad-bg)}
+.seg.err .val{color:var(--bad)}
 
-/* Table */
-
-table{
-
-    width:100%;
-
-    border-collapse:collapse;
+.notice{
+    background:var(--surface);border-radius:18px;padding:14px;
+    border-left:5px solid var(--bad);box-shadow:0 8px 24px rgba(19,35,63,.08);
+    animation:rise .2s ease-out;
 }
+.notice strong{display:block;font-size:14px;color:var(--bad);margin-bottom:4px}
+.notice p{font-size:12.5px;line-height:1.55;color:var(--ink-2)}
+.notice code{font:600 11.5px var(--mono);background:var(--soft);padding:1px 5px;border-radius:5px}
 
-tr{
+.empty{text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;padding:20px}
+.empty code{font:500 11.5px var(--mono);color:var(--ink-2)}
 
-    border-bottom:1px solid #f1f1f1;
+@media (max-width:360px){
+    .desc{font-size:15px}
+    .facts{grid-template-columns:1fr 1fr}
+    .facts .fact:last-child{grid-column:1/-1}
 }
-
-tr:last-child{
-    border-bottom:none;
-}
-
-td{
-
-    padding:6px 4px;
-
-    font-size:12px;
-
-    line-height:1.4;
-
-    color:#111;
-
-    font-weight:600;
-}
-
-/* Label */
-
-td:first-child{
-
-    width:95px;
-
-    color:#5138f7;
-
-    font-weight:800;
-
-    font-size:10px;
-
-    text-transform:uppercase;
-
-    letter-spacing:.4px;
-}
-
-/* Value */
-
-td:last-child{
-
-    color:#000;
-
-    font-weight:700;
-}
-
-/* Mobile */
-
-@media(max-width:768px){
-
-    body{
-        padding:8px;
-    }
-
-    .container{
-
-        padding:12px;
-
-        border-radius:15px;
-    }
-
-    h1{
-
-        font-size:18px;
-
-        margin-bottom:10px;
-    }
-
-    .search-box{
-
-        display:grid;
-
-        grid-template-columns:
-        calc(100% - 150px)
-        70px
-        70px;
-
-        gap:5px;
-    }
-
-    .search-box input{
-
-        width:100%;
-
-        height:40px;
-
-        font-size:14px;
-    }
-
-    button{
-
-        width:70px;
-
-        height:40px;
-
-        font-size:11px;
-    }
-
-    .result{
-
-        padding:8px;
-
-        border-radius:10px;
-    }
-
-    .result h2{
-
-        font-size:9px;
-    }
-
-    td{
-
-        font-size:11px;
-
-        padding:4px 2px;
-
-        color:#57a5f8;
-
-        font-weight:700;
-    }
-
-    td:first-child{
-
-        width:80px;
-
-        font-size:9px;
-
-        color:#5138f7;
-
-        font-weight:800;
-    }
-
-    td:last-child{
-
-        color:#111;
-
-        font-weight:700;
-    }
-}
-
 </style>
-
 </head>
 <body>
 
-<div class="container">
+<header class="top">
+    <div class="top-inner">
+        <div class="logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 9v6M11 9v6M14 9v6M17 9v6"/></svg>
+        </div>
+        <div>
+            <h1>Cek QR Product</h1>
+            <p>Scan label untuk melihat item & tanggal produksi</p>
+        </div>
+    </div>
+</header>
 
-<h1>Cek QR Product Search</h1>
+<main>
+    <section class="scan-card">
+        <div class="viewfinder" id="viewfinder">
+            <div id="reader"></div>
+            <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <div class="laser" aria-hidden="true"></div>
+            <div class="cam-bar">
+                <button type="button" onclick="gantiKamera()">Ganti kamera</button>
+                <button type="button" onclick="stopKamera()">Tutup</button>
+            </div>
+        </div>
 
-<div class="search-box">
-    <input
-        type="text"
-        id="scan"
-        placeholder="Scan atau ketik kode disini..."
-        value="">
-    <button onclick="cari()">Cari</button>
-    <button onclick="clearScan()">Clear</button>
-</div>
+        <div class="manual">
+            <div class="field">
+                <input type="text" id="scan" placeholder="Scan atau ketik kode QR" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search">
+                <button class="cam-in" id="camBtn" type="button" onclick="toggleKamera()" aria-label="Scan dengan kamera" title="Scan dengan kamera">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                </button>
+            </div>
+            <button class="btn btn-ink" type="button" onclick="cari()">Cari</button>
+            <button class="btn btn-ghost" type="button" onclick="clearScan()" aria-label="Hapus">✕</button>
+        </div>
+        <div class="cam-msg" id="camMsg"></div>
+    </section>
 
-<div id="hasil"></div>
-
-</div>
+    <div id="hasil"></div>
+</main>
 
 <script>
-
 /* ===========================
-   DATABASE ITEM
+   DATA MASTER (dari folder data/)
 =========================== */
+const items     = window.DATA_ITEMS || [];
+const uomMaster = window.DATA_UOM   || {};
+const dataSiap  = Array.isArray(window.DATA_ITEMS) && !!window.DATA_UOM;
 
-const items = [
-
-{
-    barcode:"155-A01-0001",
-    itemNo:"155-A01-0001",
-    description:"SCK @ 25 KG",
-    pt:"1"
-},
-
-{
-    barcode:"155-A01-0001",
-    itemNo:"155-A01-0001",
-    description:"MSG LC @ 25 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"155-A01-0002",
-    itemNo:"155-A01-0002",
-    description:"SCK NF13 @ 25 KG",
-    pt:"1"
-},
-
-{
-    barcode:"155-A01-0002",
-    itemNo:"155-A01-0002",
-    description:"MSG T @ 25 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"155-A01-0004",
-    itemNo:"155-A01-0004",
-    description:"SCK-GUMINDO @ 25 KG",
-    pt:"1"
-},
-
-{
-    barcode:"155-A01-0004",
-    itemNo:"155-A01-0004",
-    description:"MSG LC MESH @ 25 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"1A01",
-    itemNo:"155-C01-1001",
-    description:"MC 10 BOX @ 19.44 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1A02",
-    itemNo:"155-C01-2001",
-    description:"MC 25 BOX @ 20 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1A03",
-    itemNo:"155-C01-3001",
-    description:"MC 35 BOX @ 17.5 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1A04",
-    itemNo:"155-C01-5001",
-    description:"MC 50 BOX @ 18.8 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1B02",
-    itemNo:"155-C02-2002",
-    description:"CC 50 BOX @ 20 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1B03",
-    itemNo:"155-C02-3001",
-    description:"CC 30 BOX @ 18.6 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1C01",
-    itemNo:"155-C03-2001",
-    description:"ES 25 BOX @ 20 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1C02",
-    itemNo:"155-C03-4001",
-    description:"ES 40/HJ BOX @ 18 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1D01",
-    itemNo:"155-C04-0001",
-    description:"MIKIZERO Box @ 0.9 KG",
-    pt:"1"
-},
-
-{
-    barcode:"1D02",
-    itemNo:"155-C04-0002",
-    description:"MIKIZERO STEVIA Box @ 0.9 KG",
-    pt:"1"
-},
-
-{
-    barcode:"2A01",
-    itemNo:"155-B01-1001",
-    description:"MM 100 Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A02",
-    itemNo:"155-B01-1002",
-    description:"MM 100 T Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A03",
-    itemNo:"155-B01-1003",
-    description:"MM 100 Box Mesh 80 @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A04",
-    itemNo:"155-B01-2001",
-    description:"MM 200 Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A05",
-    itemNo:"155-B01-2501",
-    description:"MM 250 Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A06",
-    itemNo:"155-B01-2502",
-    description:"MM 250 Box Mesh 80 @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A07",
-    itemNo:"155-B01-4001",
-    description:"MM 40 Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A08",
-    itemNo:"155-B01-5001",
-    description:"MM 50 P Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A09",
-    itemNo:"155-B01-5002",
-    description:"MM 50 T Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A10",
-    itemNo:"155-B01-5003",
-    description:"MM 50 P Box Mesh 80 @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2A11",
-    itemNo:"155-B01-5004",
-    description:"MM 500 T Box @ 12 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2B01",
-    itemNo:"155-B02-1001",
-    description:"MM R1000 Box @ 7.2 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2B02",
-    itemNo:"155-B02-5001",
-    description:"MM R500 Box @ 7.68 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2B04",
-    itemNo:"155-B02-5003",
-    description:"MM R5000 Box @ 8.8 Kg",
-    pt:"2"
-},
-
-{
-    barcode:"2B05",
-    itemNo:"155-B02-5004",
-    description:"MM R5000 Box @ 7.2 Kg",
-    pt:"2"
+function getUomName(pt, uomCode){
+    return uomMaster[pt]?.[parseInt(uomCode,10)] || "-";
 }
 
-];
-
-
 /* ===========================
-   DATABASE UOM 1
+   RUMUS BATCH (sesuai tabel)
+   Format 8 karakter: P M DD YYYY
+   P    = PT              (1 BAI, 2 IMI, 3 ST)
+   M    = Bulan           (A=1 ... L=12)
+   DD   = Tanggal 2 huruf (kode digit)
+   YYYY = Tahun 4 huruf   (kode digit)
+   Contoh: 1FISUIUR = PT 1, Juni, 01, 2026
 =========================== */
+const TIDAK_DIKETAHUI = "Unknown";
 
-const uom1 = {
-1:"Batang",
-2:"Botol",
-3:"Box",
-4:"Buah",
-5:"Bungkus",
-6:"Can",
-7:"Drum",
-8:"Dus",
-9:"Ember",
-10:"Fet",
-11:"Galon",
-12:"Gram",
-13:"Gross",
-14:"Jerigen",
-15:"Kaleng",
-16:"Kg",
-17:"Lbs",
-18:"Lembar",
-19:"Liter",
-20:"Lusin",
-21:"M3",
-22:"Meter",
-23:"Pack",
-24:"Pail",
-25:"Pasang",
-26:"Pieces",
-27:"Rim",
-28:"Rit",
-29:"Roll",
-30:"Sachet",
-31:"Set",
-32:"Tabung",
-33:"Ton",
-34:"Tube",
-35:"Unit",
-36:"Vel",
-37:"Yard",
-38:"Zak",
-39:"Cc",
-40:"M2"
-};
+const bulan     = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:10,K:11,L:12};
+const kodeDigit = {S:"1",U:"2",M:"3",B:"4",E:"5",R:"6",T:"7",A:"8",L:"9",I:"0"};
+const ptMaster  = {"1":"BAI","2":"IMI","3":"ST"};
+const namaBulan = ["","Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
-
-/* ===========================
-   DATABASE UOM 2
-=========================== */
-
-const uom2 = {
-1:"Batang",
-2:"Liter",
-3:"Lusin",
-4:"Meter",
-5:"Pack",
-6:"Pail",
-7:"Pieces",
-8:"Rim",
-9:"Roll",
-10:"Set",
-11:"Ton",
-12:"Botol",
-13:"Unit",
-14:"Vel",
-15:"Zak",
-16:"Box",
-17:"Dus",
-18:"Ember",
-19:"Galon",
-20:"Kaleng",
-21:"Kg",
-22:"Lembar",
-23:"Buah",
-24:"Bungkus",
-25:"Pasang"
-};
-
-
-/* ===========================
-   MASTER UOM BERDASARKAN PT
-=========================== */
-
-const uomMaster = {
-    "1": uom1,
-    "2": uom2
-};
-
-function getUomName(batch, uomCode){
-
-    const pt = batch.charAt(0);
-
-    return uomMaster[pt]?.[uomCode] || "-";
-
+function ubahDigit(teks){
+    let hasil = "";
+    for(const c of teks){
+        if(!(c in kodeDigit)) return null;
+        hasil += kodeDigit[c];
+    }
+    return hasil;
 }
 
+function decodeBatch(batchAsli){
+    const batch     = batchAsli.toUpperCase();
+    const ptKode    = batch.charAt(0);
+    const blnKode   = batch.charAt(1);
+    const hariKode  = batch.substring(2,4);
+    const tahunKode = batch.substring(4,8);
 
-/* ===========================
-   BATCH LOOKUP
-=========================== */
+    const pt    = ptMaster[ptKode] || TIDAK_DIKETAHUI;
+    const bln   = bulan[blnKode];
+    const hari  = hariKode.length === 2  ? ubahDigit(hariKode)  : null;
+    const tahun = tahunKode.length === 4 ? ubahDigit(tahunKode) : null;
 
-const bulan = {
-A:1,
-B:2,
-C:3,
-D:4,
-E:5,
-F:6,
-G:7,
-H:8,
-I:9,
-J:10,
-K:11,
-L:12
-};
-
-const kodeDigit = {
-S:"1",
-U:"2",
-M:"3",
-B:"4",
-E:"5",
-R:"6",
-T:"7",
-A:"8",
-L:"9",
-I:"0"
-};
-
-const ptMaster = {
-"1":"BAI",
-"2":"IMI"
-};
-
-
-/* ===========================
-   DECODE BATCH
-=========================== */
-
-function decodeBatch(batch){
-
-    if(batch.length < 8){
-        return {
-            valid:false,
-            tanggal:"Batch tidak valid"
-        };
+    let tanggalValid = false;
+    if(bln && hari && tahun){
+        const d = parseInt(hari,10), y = parseInt(tahun,10);
+        const dt = new Date(y, bln - 1, d);
+        tanggalValid = d >= 1 && dt.getFullYear() === y && dt.getMonth() === bln - 1 && dt.getDate() === d;
     }
 
-    let pt = batch.substring(0,1);
-
-    let blnCode = batch.substring(1,2);
-
-    let d1 = batch.substring(2,3);
-    let d2 = batch.substring(3,4);
-
-    let y1 = batch.substring(4,5);
-    let y2 = batch.substring(5,6);
-    let y3 = batch.substring(6,7);
-
-    let bulanAngka = bulan[blnCode];
-
-    if(
-       !bulanAngka ||
-       !kodeDigit[d1] ||
-       !kodeDigit[d2] ||
-       !kodeDigit[y1] ||
-       !kodeDigit[y2] ||
-       !kodeDigit[y3]
-    ){
-        return {
-            valid:false,
-            pt:ptMaster[pt] || "-",
-            tanggal:"Batch Tidak Valid"
-        };
-    }
-
-    let hari =
-        kodeDigit[d1] +
-        kodeDigit[d2];
-
-    let tahun =
-        "20" +
-        kodeDigit[y1] +
-        kodeDigit[y2];
-
-    const namaBulan = [
-        "",
-        "Januari",
-        "Februari",
-        "Maret",
-        "April",
-        "Mei",
-        "Juni",
-        "Juli",
-        "Agustus",
-        "September",
-        "Oktober",
-        "November",
-        "Desember"
-    ];
-
-    return{
-        valid:true,
-        pt:ptMaster[pt] || "-",
-        tanggal:
-        hari+
-        " "+
-        namaBulan[bulanAngka]+
-        " "+
-        tahun
+    return {
+        valid: tanggalValid && pt !== TIDAK_DIKETAHUI,
+        pt,
+        tanggal: tanggalValid ? `${hari} ${namaBulan[bln]} ${tahun}` : TIDAK_DIKETAHUI,
+        seg: [
+            {code:ptKode||"-",    val:ptMaster[ptKode] || "?",            lab:"PT",      ok:!!ptMaster[ptKode]},
+            {code:blnKode||"-",   val:bln ? namaBulan[bln].slice(0,3):"?", lab:"Bulan",   ok:!!bln},
+            {code:hariKode||"-",  val:hari || "?",                        lab:"Tanggal", ok:!!hari && tanggalValid},
+            {code:tahunKode||"-", val:tahun || "?",                       lab:"Tahun",   ok:!!tahun}
+        ]
     };
 }
-
 
 /* ===========================
    SEARCH
 =========================== */
+function esc(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+const hasilEl = () => document.getElementById("hasil");
 
-function cari(){
-
-    let qr =
-    document.getElementById("scan")
-    .value.trim();
-    
-    if(qr === ""){
-        document.getElementById("hasil").innerHTML = "";
-        return;
-    }
-
-    let p = qr.split("/");
-
-    if(p.length < 5){
-        alert("Format scan tidak valid");
-        return;
-    }
-
-    let barcode = p[0];
-    let qty = p[1];
-    let uomCode = p[3];
-    let batch = p[4];
-
-    
-    // PT diambil dari digit pertama batch
-    let ptBatch = batch.charAt(0);
-
-    // Cari berdasarkan Barcode + PT Batch
-    let item = items.find(row =>
-        row.barcode === barcode &&
-        row.pt === ptBatch
-    );
-
-
-    if(!item){
-        document.getElementById("hasil").innerHTML=
-        `
-        <div class="invalid">
-            Item tidak ditemukan
-            <br><br>
-            Barcode : ${barcode}
-            <br>
-            PT Batch : ${ptBatch}
-            <br><br>
-            Cek apakah Barcode sesuai dengan PT pada digit pertama Batch.
-        </div>
-        `;
-        return;
-    }
-
-    let dataBatch =
-    decodeBatch(batch);
-
-    let warna =
-    dataBatch.valid ? "valid" : "invalid";
-
-    document.getElementById("hasil").innerHTML=`
-
-    <div class="result">
-
-        <h2>
-        ${qr}
-        </h2>
-
-        <div class="${warna}">
-
-            <table>
-
-                <tr>
-                    <td width="180"><b>Item No</b></td>
-                    <td>${item.itemNo}</td>
-                </tr>
-
-                <tr>
-                    <td><b>Item Description</b></td>
-                    <td>${item.description}</td>
-                </tr>
-
-                <tr>
-                    <td><b>Qty</b></td>
-                    <td>${qty}</td>
-                </tr>
-
-                <tr>
-                    <td><b>UoM</b></td>
-                    <td>${getUomName(batch, uomCode)}</td>
-                </tr>
-
-                <tr>
-                    <td><b>Batch</b></td>
-                    <td>${batch}</td>
-                </tr>
-
-                <tr>
-                    <td><b>PT</b></td>
-                    <td>${dataBatch.pt}</td>
-                </tr>
-
-                <tr>
-                    <td><b>Tanggal Produksi</b></td>
-                    <td>${dataBatch.tanggal}</td>
-                </tr>
-
-                <tr>
-                    <td><b>Status Batch</b></td>
-                    <td>
-                    ${
-                        dataBatch.valid
-                        ? '✅ VALID'
-                        : '❌ INVALID'
-                    }
-                    </td>
-                </tr>
-
-            </table>
-
-        </div>
-
-    </div>`;
-
+function tampilKosong(){
+    hasilEl().innerHTML = `<div class="empty">Hasil scan akan muncul di sini.<br>Format: <code>BARCODE/QTY/-/UOM/BATCH/...</code></div>`;
 }
 
-document.getElementById("scan")
-.addEventListener("keydown", function(e){
+function tampilError(judul, isi){
+    hasilEl().innerHTML = `<div class="notice"><strong>${judul}</strong><p>${isi}</p></div>`;
+}
 
-    if(e.key === "Enter"){
-        cari();
+function cari(){
+    if(!dataSiap){
+        tampilError("Data master tidak terbaca",
+            `Pastikan file <code>data/items.js</code> dan <code>data/uom.js</code> ada di folder <code>data</code> sejajar dengan <code>index.html</code>.`);
+        return;
     }
-});
 
-cari();
+    const qr = document.getElementById("scan").value.trim();
+    if(qr === ""){ tampilKosong(); return; }
+
+    const p = qr.split("/");
+    if(p.length < 5 || !p[4]){
+        tampilError("Format scan tidak dikenali",
+            `Kode harus berisi minimal 5 bagian dipisah tanda <code>/</code>, contoh <code>2A01/1/N/16/2UFIIIUI</code>.`);
+        return;
+    }
+
+    const barcode = p[0].trim().toUpperCase();
+    const qty     = p[1].trim();
+    const uomCode = p[3].trim();
+    const batch   = p[4].trim().toUpperCase();
+    const ptBatch = batch.charAt(0);
+
+    const item = items.find(r => String(r.barcode).toUpperCase() === barcode && String(r.pt) === ptBatch);
+
+    if(!item){
+        tampilError("Item tidak ditemukan",
+            `Barcode <code>${esc(barcode)}</code> dengan PT <code>${esc(ptBatch)}</code> tidak ada di data master. Pastikan barcode sesuai dengan PT pada digit pertama batch.`);
+        return;
+    }
+
+    const b = decodeBatch(batch);
+
+    const strip = b.seg.map(s => `
+        <div class="seg ${s.ok ? "" : "err"}">
+            <span class="code">${esc(s.code)}</span>
+            <span class="val">${esc(s.val)}</span>
+            <span class="lab">${s.lab}</span>
+        </div>`).join("");
+
+    hasilEl().innerHTML = `
+    <article class="result">
+        <div class="status ${b.valid ? "ok" : "bad"}">
+            <div class="ico">${b.valid ? "✓" : "!"}</div>
+            <strong>${b.valid ? "Batch valid" : "Batch tidak valid"}</strong>
+            <span>${b.valid ? "Sesuai rumus" : "Tidak cocok rumus"}</span>
+        </div>
+
+        <div class="body">
+            <div class="desc">${esc(item.description)}</div>
+            <div class="meta">${esc(item.itemNo)}  |  Barcode ${esc(barcode)}</div>
+
+            <div class="date ${b.valid ? "" : "unknown"}">
+                <small>Tanggal produksi</small>
+                <b>${esc(b.tanggal)}</b>
+            </div>
+
+            <div class="facts">
+                <div class="fact"><small>Qty</small><b>${esc(qty)}</b></div>
+                <div class="fact"><small>Satuan (${esc(uomCode)})</small><b>${esc(getUomName(ptBatch, uomCode))}</b></div>
+                <div class="fact"><small>PT</small><b>${esc(b.pt)}</b></div>
+            </div>
+
+            <div class="strip">${strip}</div>
+        </div>
+    </article>`;
+}
+
+document.getElementById("scan").addEventListener("keydown", e => {
+    if(e.key === "Enter"){ e.target.blur(); cari(); }
+});
 
 function clearScan(){
     document.getElementById("scan").value = "";
-    document.getElementById("hasil").innerHTML = "";
+    tampilKosong();
     document.getElementById("scan").focus();
 }
+
+/* ===========================
+   SCAN KAMERA
+   Butuh HTTPS (GitHub Pages sudah HTTPS)
+=========================== */
+let scanner = null;
+let pakaiKameraBelakang = true;
+let sedangScan = false;
+
+function pesanKamera(teks){
+    const el = document.getElementById("camMsg");
+    el.textContent = teks || "";
+    el.classList.toggle("show", !!teks);
+}
+
+function toggleKamera(){
+    if(document.getElementById("viewfinder").classList.contains("on")) stopKamera();
+    else mulaiKamera();
+}
+
+async function mulaiKamera(){
+    pesanKamera("");
+    if(typeof Html5Qrcode === "undefined"){
+        pesanKamera("Library kamera gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
+        return;
+    }
+    if(!window.isSecureContext){
+        pesanKamera("Kamera hanya bisa dipakai lewat HTTPS. Buka halaman ini dari link GitHub Pages (https://...).");
+        return;
+    }
+
+    hasilEl().innerHTML = "";
+    document.getElementById("viewfinder").classList.add("on");
+    document.getElementById("camBtn").classList.add("live");
+
+    if(!scanner) scanner = new Html5Qrcode("reader", {verbose:false});
+
+    try{
+        await scanner.start(
+            {facingMode: pakaiKameraBelakang ? "environment" : "user"},
+            {
+                fps: 12,
+                qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * 0.64); return {width:s, height:s}; },
+                aspectRatio: 1
+            },
+            hasilScan,
+            () => {}
+        );
+        sedangScan = true;
+    }catch(err){
+        tutupTampilanKamera();
+        pesanKamera("Kamera tidak bisa dibuka. Izinkan akses kamera di browser, lalu coba lagi.");
+    }
+}
+
+function hasilScan(teks){
+    if(!sedangScan) return;
+    sedangScan = false;
+    if(navigator.vibrate) navigator.vibrate(80);
+    document.getElementById("scan").value = teks;
+    stopKamera();
+    cari();
+}
+
+async function stopKamera(){
+    sedangScan = false;
+    try{ if(scanner && scanner.isScanning) await scanner.stop(); }catch(e){}
+    tutupTampilanKamera();
+}
+
+function tutupTampilanKamera(){
+    document.getElementById("viewfinder").classList.remove("on");
+    document.getElementById("camBtn").classList.remove("live");
+}
+
+async function gantiKamera(){
+    pakaiKameraBelakang = !pakaiKameraBelakang;
+    await stopKamera();
+    mulaiKamera();
+}
+
+tampilKosong();
 </script>
 </body>
 </html>
